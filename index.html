@@ -127,7 +127,7 @@ footer{padding:26px 0 90px;color:var(--mut);font-size:12px;border-top:1px solid 
 
 <script>
 (function(){'use strict';
-var SITE={name:'pushpaknagarproperties.org',api:'https://panvelprojects.in',admin:false,useCfg:false,hook:'',ts:'',dk:'d3',f:function(p){var m=/^sec(?:tor)?-?\s*(\d+)/i.exec(String(p.sec||'').trim());return String(p.loc||'').trim().toLowerCase()==='pushpak nagar'&&!!m&&+m[1]>=1&&+m[1]<=10},key:'org',stg:false};var K={db:'pnp2_projects_'+SITE.name,ses:'pnp2_session_'+SITE.name,cfg:'pnp2_cfg3_'+SITE.name,ld:'pnp2_leads_'+SITE.name},DAY=864e5,SALT='pnp::';
+var SITE={name:'pushpaknagarproperties.org',api:'https://www.panvelprojects.in',admin:false,useCfg:false,hook:'',ts:'',dk:'d3',f:function(p){var m=/^sec(?:tor)?-?\s*(\d+)/i.exec(String(p.sec||'').trim());return String(p.loc||'').trim().toLowerCase()==='pushpak nagar'&&!!m&&+m[1]>=1&&+m[1]<=10},key:'org',stg:false};var K={db:'pnp2_projects_'+SITE.name,ses:'pnp2_session_'+SITE.name,cfg:'pnp2_cfg3_'+SITE.name,ld:'pnp2_leads_'+SITE.name},DAY=864e5,SALT='pnp::';
 var USERS={superadmin:{h:'x',role:'Super Admin'},editor:{h:'x',role:'Editor'}};
 var mem={},$=function(i){return document.getElementById(i)};
 function sg(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}function ss(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}function sd(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
