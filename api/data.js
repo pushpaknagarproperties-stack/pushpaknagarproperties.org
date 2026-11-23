@@ -1,10 +1,3 @@
-// api/data.js - VERCEL MASTER ke liye - GitHub se CHECKED
-// Ye wali file use karo: data.js (15519 chars, 9 LOCS + Navi Mumbai fix)
-// data_3e9bc2.js (12444 chars, 8 LOCS) PURANI hai - usko mat use karo, usme Navi Mumbai + Rebale fix nahi hai
-// Deploy: Vercel > panvelprojects.in > /api/data.js me ye file daalo
-// Env chahiye: Upstash Redis (via _lib.js), SESSION_SECRET
-// GHL (.IN) par ye file NAHI chalegi - GHL par Worker v6.15 ka /api/data use hoga
-// ---
 const { redis, hasDb, verify, body, getAuth, dk, prefix, unsafePreview } = require('./_lib');
 const PUB = { projects: 'projects', cfg: 'cfg', testi: 'testi', legal: 'legal' };
 const PRIV = { brand: 'brand', campaigns: 'campaigns', legalh: 'legalh', legald: 'legald' };
@@ -94,6 +87,8 @@ function cleanHist(h) {
   const slug = cstr(h.slug, 40).toLowerCase().replace(/[^a-z0-9-]/g, ''); if (!slug) return null;
   return { t: Number(h.t) || Date.now(), u: cstr(h.u, 40), slug, title: cstr(h.title, 120), body: ctext(h.body, 20000), ver: Number(h.ver) || 1 };
 }
+const PERM_DEF = { addProperty: false, deleteProperty: false, campaigns: true, leads: true };
+async function getPerms() { try { const v = await redis(['GET', dk('perms')]); const p = v ? JSON.parse(v) : {}; return Object.assign({}, PERM_DEF, p.editor || {}); } catch (e) { return Object.assign({}, PERM_DEF); } }
 module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); return res.status(204).end(); }
   try {
@@ -113,6 +108,16 @@ module.exports = async (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', '*');
         return res.status(200).json({ ok: true, data: v ? JSON.parse(v) : null });
       }
+      if (k === 'perms') {
+        if (!s) return res.status(401).json({ ok: false });
+        const pv = await redis(['GET', dk('perms')]);
+        return res.status(200).json({ ok: true, data: pv ? JSON.parse(pv) : null });
+      }
+      if (k === 'loginlog') {
+        if (!s || s.role !== 'Super Admin') return res.status(403).json({ ok: false });
+        const lv = await redis(['LRANGE', dk('loginlog'), 0, 99]);
+        return res.status(200).json({ ok: true, data: (lv || []).map((x) => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean) });
+      }
       if (PRIV[k]) {
         if (!s) return res.status(401).json({ ok: false });
         const v = await redis(['GET', dk(PRIV[k])]);
@@ -127,7 +132,16 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       if (!s) return res.status(401).json({ ok: false });
+      if (s.role === 'Viewer') return res.status(403).json({ ok: false, error: 'read-only' });
       const b = body(req);
+if (k === 'perms') {
+        if (s.role !== 'Super Admin') return res.status(403).json({ ok: false });
+        const pe = (b.data && b.data.editor) || {};
+        const po = { editor: { addProperty: pe.addProperty === true, deleteProperty: pe.deleteProperty === true, campaigns: pe.campaigns !== false, leads: pe.leads !== false } };
+        await redis(['SET', dk('perms'), JSON.stringify(po)]);
+        await redis(['LPUSH', dk('audit'), JSON.stringify({ a: 'edit-perms', id: 'perms', name: JSON.stringify(po.editor), by: s.u, t: Date.now() })]);
+        return res.status(200).json({ ok: true });
+      }
 if (k === 'leads') {
         // P02-R1 CRM: delete (Super Admin only) OR full-list save (Super Admin + Editor).
         const STAGES = ['New', 'Contacted', 'Visit Scheduled', 'Visit Done', 'Negotiating', 'Booked', 'Lost'];
@@ -148,6 +162,7 @@ if (k === 'leads') {
         }
         if (Array.isArray(b.data)) {
           if (s.role !== 'Super Admin' && s.role !== 'Editor') return res.status(403).json({ ok: false });
+          if (s.role === 'Editor' && !(await getPerms()).leads) return res.status(403).json({ ok: false });
           if (b.data.length > 2000 || JSON.stringify(b.data).length > 900000) return res.status(413).json({ ok: false });
           const cleaned = b.data.map(cleanLead).filter(Boolean);
           if (cleaned.length !== b.data.length) return res.status(400).json({ ok: false, error: 'invalid lead' });
@@ -162,6 +177,7 @@ if (k === 'leads') {
         const pd = b.data;
         if (!Array.isArray(pd) || JSON.stringify(pd).length > 400000) return res.status(400).json({ ok: false });
         if ((k === 'brand' || k === 'legalh') && s.role !== 'Super Admin') return res.status(403).json({ ok: false });
+        if (k === 'campaigns' && s.role === 'Editor' && !(await getPerms()).campaigns) return res.status(403).json({ ok: false });
         if (pd.length > (k === 'brand' ? 20 : k === 'legalh' ? 60 : 300)) return res.status(413).json({ ok: false });
         const out = pd.map(k === 'brand' ? cleanBrand : k === 'legalh' ? cleanHist : cleanCamp).filter(Boolean);
         await redis(['SET', dk(PRIV[k]), JSON.stringify(out)]);
@@ -197,7 +213,10 @@ if (k === 'leads') {
       const raw = await redis(['GET', dk('projects')]);
       const old = raw ? JSON.parse(raw) : null;
       if (s.role !== 'Super Admin') {
-        if (!old || old.length !== cleaned.length || !cleaned.every((c) => old.some((q) => q.id === c.o.id))) return res.status(403).json({ ok: false });
+        const pm = await getPerms();
+        const oldIds = (old || []).map((q) => q.id), newIds = cleaned.map((c) => c.o.id);
+        const adds = newIds.filter((i) => !oldIds.includes(i)), dels = oldIds.filter((i) => !newIds.includes(i));
+        if (!old || (adds.length && !pm.addProperty) || (dels.length && !pm.deleteProperty)) return res.status(403).json({ ok: false });
       }
       const oldMap = new Map((old || []).map((q) => [q.id, q])), now = Date.now();
       const next = cleaned.map((c) => {
