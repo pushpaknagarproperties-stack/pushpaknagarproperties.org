@@ -158,7 +158,7 @@ body.appadm #admin .row{flex-wrap:wrap}body.appadm #t_rp .row,body.appadm #t_rk 
 
 <script>
 (function(){'use strict';
-var SITE={name:'pushpaknagarproperties.org',api:'',admin:true,useCfg:true,hook:'',ts:'',dk:'d3',f:function(p){var m=/^sec(?:tor)?-?\s*(\d+)/i.exec(String(p.sec||'').trim());return String(p.loc||'').trim().toLowerCase()==='pushpak nagar'&&!!m&&+m[1]>=1&&+m[1]<=10},key:'org',stg:false};var K={db:'pnp2_projects_'+SITE.name,ses:'pnp2_session_'+SITE.name,cfg:'pnp2_cfg3_'+SITE.name,ld:'pnp2_leads_'+SITE.name},DAY=864e5,SALT='pnp::';
+var SITE={name:'pushpaknagarproperties.org',api:'https://www.panvelprojects.in',admin:false,useCfg:true,hook:'',ts:'',dk:'d3',f:function(p){var m=/^sec(?:tor)?-?\s*(\d+)/i.exec(String(p.sec||'').trim());return String(p.loc||'').trim().toLowerCase()==='pushpak nagar'&&!!m&&+m[1]>=1&&+m[1]<=10},key:'org',stg:false};var K={db:'pnp2_projects_'+SITE.name,ses:'pnp2_session_'+SITE.name,cfg:'pnp2_cfg3_'+SITE.name,ld:'pnp2_leads_'+SITE.name},DAY=864e5,SALT='pnp::';
 var USERS={superadmin:{h:'x',role:'Super Admin'},editor:{h:'x',role:'Editor'}};
 var mem={},$=function(i){return document.getElementById(i)};
 function sg(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}function ss(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}function sd(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
@@ -474,7 +474,7 @@ $('stg').innerHTML=out.map(function(s){return'<div class="st5'+(s.bad?' bad':'')
 /* boot */
 P=jp(K.db,null);if(!Array.isArray(P)||!P.length){P=seed.slice()}P.forEach(norm);L=jp(K.ld,[]);if(SITE.useCfg)cfg=Object.assign(cfg,jp(K.cfg,{}));persistAll();rP();adm();loadServer();if(SITE.name!=='panvelprojects.in'){$('seeall').hidden=false;$('fAll').style.display='block'}tsInit();if(!SITE.admin){$('admLink').style.display='none';$('fAdm').style.display='none'}
 /* AI URL importer (Cloudflare Worker) */
-(function(){var b=document.createElement('div');b.textContent='build 04Nov-28 · P04-R1 Roles & Reports · ORG';b.style.cssText='position:fixed;left:6px;bottom:3px;font:10px monospace;opacity:.6;color:#E5C46B;z-index:2147483647;pointer-events:none';document.body.appendChild(b);document.title+=' · b04Nov-28-P03R1'})();
+(function(){var b=document.createElement('div');b.textContent='build 04Nov-28 · P04-R2 Public Fix · ORG';b.style.cssText='position:fixed;left:6px;bottom:3px;font:10px monospace;opacity:.6;color:#E5C46B;z-index:2147483647;pointer-events:none';document.body.appendChild(b);document.title+=' · b04Nov-28-P03R1'})();
 var _fs=$('fsv').onclick;$('fsv').onclick=function(ev){var wasAdd=!edit,eid=edit&&edit.id;$('fe').textContent='';if(!window.__ckOK){var mk=ckMissing();if(mk.length){ckShow(mk);return}}try{_fs.call(this,ev)}catch(err){$('fe').textContent='Save error: '+(err&&err.message||err);return}if(!$('fe').textContent&&$('pd').open){$('fe').textContent='Save ruk gaya. session='+(session()?'ok':'NO')+', role='+(S&&S.role||'none')+'. Logout karke dobara login karo, phir try karo.'}if(!$('pd').open){window.__ckOK=false;if(!$('fe').textContent){AI.lastId=wasAdd?(P[0]&&P[0].id):eid}}};
 window.addEventListener('error',function(e){toast('Page error: '+e.message)});
 var _fe=$('fe');new MutationObserver(function(){if(_fe.textContent){_fe.scrollIntoView({block:'center'});alert(_fe.textContent)}}).observe(_fe,{childList:true,characterData:true,subtree:true});
